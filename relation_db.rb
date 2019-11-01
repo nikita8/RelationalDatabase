@@ -7,14 +7,14 @@ class RelationDB
     @keys = compute_keys
   end
 
-  def closure(seed)
+  def closure(seed, computing_fds=fds)
     seed_closure = seed.strip.split('') - ['-', '>', ' ']
-    valid_fds = fds
+    valid_fds = computing_fds
     found_fds = []
     while true
       found_all_closure = true
       valid_fds.each do |fd|
-        lhs, rhs = fd.split('->')
+        lhs, rhs = fd.split('->').map(&:strip)
         if(lhs.split('') - seed_closure).empty?
           seed_closure += rhs.split('')
           found_fds << fd
@@ -36,34 +36,43 @@ class RelationDB
   end
 
   def normal_form
-    if third_nf
-      "3NF"
-    elsif bcnf
-      "BCNF"
-    elsif second_nf
-      "2NF"
-    elsif first_nf
-      "1NF"
-    end
+    compute_normal_form
   end
 
   private
   def filter_and_transform(fds)
-    new_fd = fds
+    parsed_fds = fds
     fds.each do |fd|
       lhs, rhs = fd.split('->')
       if lhs.nil? || rhs.nil?
-        new_fd = new_fd - [fd]
-        return
+        parsed_fds = parsed_fds - [fd]
+        next
       end
+      lhs = lhs.strip
+      rhs = rhs.strip
       if rhs.length > 1 
-        new_fd = new_fd - [fd]
-        new_fd = new_fd + transform_to_non_trivial_fd(lhs, rhs)
+        parsed_fds = parsed_fds - [fd]
+        parsed_fds = parsed_fds + transform_to_non_trivial_fd(lhs, rhs)
       elsif check_trivial_or_invalid(lhs, rhs)
-        new_fd = new_fd - [fd]
+        parsed_fds = parsed_fds - [fd]
       end
     end
-    new_fd
+    parsed_fds - superfluous_fds(parsed_fds)
+  end
+
+  def superfluous_fds(filtered_fds)
+    discarded_fds = []
+    filtered_fds.each do |fd|
+      lhs, rhs = fd.split('->').map(&:strip)
+      if lhs.size > 1
+        remainging_fds = filtered_fds - [fd] - discarded_fds
+        fd_closure = closure(lhs, remainging_fds)
+        if ([rhs] - fd_closure).empty?
+          discarded_fds << fd
+        end
+      end
+    end
+    discarded_fds
   end
 
   def check_trivial_or_invalid(lhs, rhs)
@@ -77,7 +86,7 @@ class RelationDB
   end
 
   def transform_to_non_trivial_fd(lhs, rhs)
-    rhs.split('').map do |new_rhs|
+    rhs.strip.split('').map do |new_rhs|
       unless check_trivial_or_invalid(lhs, new_rhs)
         [lhs, new_rhs].join('->')
       end
@@ -100,7 +109,7 @@ class RelationDB
 
   def key(attribute)
     return attribute if key?(attribute)
-    (key_attributes - attribute.split('')).each do |attr|
+    (keys_seed - attribute.split('')).each do |attr|
       key(attribute + attr)
     end
     return
@@ -114,19 +123,6 @@ class RelationDB
     lhs_attributes - rhs_attributes
   end
 
-  def bcnf
-  end
-
-  def first_nf
-  end
-
-  def second_nf
-  end
-
-  def third_nf
-    bcnf(fd) && 
-  end
-
   def partial_key_fds
     keys.map do |key|
       key_attrs = key.split('')
@@ -138,23 +134,28 @@ class RelationDB
     @keys_seed ||= attributes - key_in_rhs_only
   end
 
+  def bcnf_voilating_fds
+    keys.map do |key|
+      key_attrs = key.split('')
+      lhs_attributes.select{|attr| !(attr.split('') & key_attrs).empty? }
+    end.flatten
+  end
+
   def rhs_key_attributes
     @rhs_key_attributes ||= keys.map do |key|
       key_attrs = key.split('')
-      rhs_attributes.select{|attr| !(key_attrs - attr.split('')).empty? }
+      rhs_attributes.select{|attr| !(attr.split('') & key_attrs).empty? }
     end.flatten
   end
 
   def compute_normal_form
-    bcnf_voilating_fds = keys.map do |key|
-      key_attrs = key.split('')
-      lhs_attributes.select{|attr| !(key_attrs - attr.split('')).empty? }
-    end.flatten
-
     if bcnf_voilating_fds.empty?
-      return "3NF" if rhs_key_attributes.present?
-      "BCNF"
-    elsif rhs_key_attributes.present?
+      return "3NF" unless rhs_key_attributes.empty?
+      return "BCNF"
+    elsif !rhs_key_attributes.empty?
+      return "1NF"
+    else
+      return "2NF"
     end
   end
 end

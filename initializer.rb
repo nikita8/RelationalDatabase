@@ -3,7 +3,7 @@ require './relation_db'
 def relation_attributes
   puts "Enter the names of the attributes:(e.g. ABCD indicates 4 atributes A thru D)"
   attributes = gets.strip.upcase
-  get_relation_attributes unless is_albhabet(attributes)
+  relation_attributes unless is_albhabet(attributes)
   attributes
 end
 
@@ -13,13 +13,14 @@ def fds
 end
 
 def is_albhabet(attributes)
-  !attributes.match(/\A[a-zA-Z]*\z/).nil?
+  !attributes.empty? && !attributes.match(/^[A-Za-z]+$/).nil?
 end
 
 #Initialize user provided relation atrributes and FDs 
 # Eg: Realtion Attributes: ABCDEF
 # FDS: A->C, AB->B,  A->F, AB->CD, C->B
 rdb = RelationDB.new(relation_attributes, fds)
+p "Valid FDS: #{rdb.fds.join(', ')}"
 
 # Compute closure of user provided set of attributes as seed
 # User can exit by typing 'quit'.
