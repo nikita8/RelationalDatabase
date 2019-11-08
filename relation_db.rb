@@ -136,42 +136,61 @@ class RelationDB
   end
 
   def bcnf_voilating_fds?
-    keys.each do |key|
-      key_attrs = key.chars
-      if !lhs_attributes.select{|attr| !((attr.chars & key_attrs).empty?) }
-        return true
+    lhs_attributes.each do |attr| 
+      keys.each do |key|
+        key_attrs = key.chars
+        if !(key_attrs - attr.chars).empty?
+          return true
+        end
       end
     end
     return false
   end
 
-  def lhs_partial_key_fds?
-    keys.each do |key|
-      key_attrs = key.chars
-      if lhs_attributes.select{|attr| (attr.chars - key_attrs).empty? }
-        return true
+  def one_nf?
+    fds.each do |fd| 
+      lhs, rhs = fd.split('->').map(&:strip)
+      keys.each do |key|
+        if (lhs.chars - key.chars).empty? && !key.include?(rhs)
+          return true
+        end
       end
     end
     return false
   end
 
-  def key_attribute_fds?(rhs_attr)
-    keys.each do |key|
-      key_attrs = key.chars
-      if rhs_attr.select{|attr| !([attr] & key_attrs).empty? }
-        return true
+  def all_rhs_key_attributes?
+    rhs_attributes.each do |attr|
+      key_attribute = keys.any? do |key|
+        key.include?(attr)
       end
+      return false unless key_attribute
     end
+    return true
+  end
+
+  def any_rhs_key_attributes?
+    rhs_attributes.each do |attr|
+      key_attribute = keys.any? do |key|
+        key.include?(attr)
+      end
+      return true if key_attribute
+    end
+    return false
   end
 
   def compute_normal_form
-    if !bcnf_voilating_fds
-      return "3NF" if key_attribute_fds?(rhs_attributes)
-      return "BCNF"
-    elsif lhs_partial_key_fds && !rhs_key_attributes.empty?
-      return "1NF"
+    if all_rhs_key_attributes?
+      "3NF"
+    elsif !bcnf_voilating_fds?
+      if any_rhs_key_attributes?
+        return "3NF"
+      end
+      "BCNF" 
+    elsif one_nf?
+      "1NF"
     else
-      return "2NF"
+      "2NF"
     end
   end
 end
