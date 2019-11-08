@@ -32,8 +32,8 @@ end
 # FDS: A->C; AB->B;  A->F; AB->CD; C->B
 rdb = Relation.new(relation_attributes, fds)
 compute_closure(rdb)
-keys = rdb.keys().join(', ')
-normal_form = rdb.normal_form()
+keys = rdb.keys.join(', ')
+normal_form = rdb.normal_form
 
 p "| Valid FDS: #{rdb.fds.join('; ')} |"
 p "| Keys: #{keys} |"

@@ -1,10 +1,11 @@
 class Relation
-  attr_reader :attributes, :fds, :keys, :lhs_attributes, :rhs_attributes
+  attr_reader :attributes, :fds, :keys, :normal_form, :lhs_attributes, :rhs_attributes
 
   def initialize(attributes, fds)
     @attributes = attributes.chars
     @fds = filter_and_transform(fds).uniq
     @keys = compute_keys
+    @normal_form = compute_normal_form
   end
 
   def closure(seed, computing_fds=fds)
@@ -26,18 +27,6 @@ class Relation
       break if found_all_closure
     end
     seed_closure.uniq
-  end
-
-  def compute_keys
-    partial_key = (attributes - rhs_attributes).join
-    return [partial_key] if key?(partial_key)
-    keys_seed.map do |attribute|
-      key(attribute + partial_key)
-    end.compact
-  end
-
-  def normal_form
-    compute_normal_form
   end
 
   private
@@ -105,6 +94,14 @@ class Relation
         update_lhs_rhs_attr(lhs, non_trivial_rhs)
         [lhs, non_trivial_rhs].join('->')
       end
+    end.compact
+  end
+
+  def compute_keys
+    partial_key = (attributes - rhs_attributes).join
+    return [partial_key] if key?(partial_key)
+    keys_seed.map do |attribute|
+      key(attribute + partial_key)
     end.compact
   end
 
