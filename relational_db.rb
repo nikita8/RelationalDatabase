@@ -1,4 +1,4 @@
-require './relation_db'
+require './relation'
 
 def relation_attributes
   p "Enter the names of the attributes:(e.g. ABCD indicates 4 atributes A thru D)"
@@ -30,7 +30,7 @@ end
 # Initialize user provided relation atrributes and FDs 
 # Eg: Relation Attributes: ABCDEF
 # FDS: A->C; AB->B;  A->F; AB->CD; C->B
-rdb = RelationDB.new(relation_attributes, fds)
+rdb = Relation.new(relation_attributes, fds)
 compute_closure(rdb)
 keys = rdb.keys().join(', ')
 normal_form = rdb.normal_form()

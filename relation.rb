@@ -1,4 +1,4 @@
-class RelationDB
+class Relation
   attr_reader :attributes, :fds, :keys, :lhs_attributes, :rhs_attributes
 
   def initialize(attributes, fds)
