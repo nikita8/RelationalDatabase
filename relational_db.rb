@@ -1,14 +1,15 @@
 require './relation'
 
 def relation_attributes
-  p "Enter the names of the attributes:(e.g. ABCD indicates 4 atributes A thru D)"
+  puts "Enter the names of the attributes:(e.g. ABCD indicates 4 atributes A thru D)"
   attributes = gets.strip.upcase
   relation_attributes unless is_albhabet(attributes)
   attributes
 end
 
 def fds
-  p "Enter the set of FDs separated by ';': eg: A->B; C->D"
+  puts
+  puts "Enter the set of FDs separated by ';': eg: A->B; C->D"
   gets.strip.upcase.split(';')
 end
 
@@ -19,11 +20,16 @@ end
 # Compute closure of user provided set of attributes as seed
 # User can exit by typing 'quit'.
 def compute_closure(rdb)
+  puts
+  puts "Closure Operator:"
   while true
-    puts "Enter the seed:(type quit to exit)"
+    puts "Enter any set of relation attributes as the seed:(type quit to exit)"
     seed = gets.strip.upcase
     break if seed == 'QUIT'
-    p "Closure of #{seed}: { #{rdb.closure(seed).join(', ')} }"
+    closure = rdb.closure(seed)
+    if closure && !closure&.empty?
+      puts "Closure of #{seed}: { #{closure.join(', ')} }"
+    end
   end
 end
 
@@ -34,8 +40,7 @@ rdb = Relation.new(relation_attributes, fds)
 compute_closure(rdb)
 keys = rdb.keys.join(', ')
 normal_form = rdb.normal_form
-
-p "| Valid FDS: #{rdb.fds.join('; ')} |"
-p "| Keys: #{keys} |"
-p "| Normal Form: #{normal_form} |"
-
+puts
+puts "Valid FDS: #{rdb.fds.join('; ')}"
+puts "Keys of the table: #{keys}"
+puts "Table's Normal Form: #{normal_form} "

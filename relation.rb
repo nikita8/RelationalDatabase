@@ -10,6 +10,7 @@ class Relation
 
   def closure(seed, computing_fds=fds)
     seed_closure = seed.strip.chars - ['-', '>', ' ']
+    # return unless (seed_closure - attributes).empty?
     valid_fds = computing_fds
     found_fds = []
     found_all_closure = false
@@ -148,6 +149,7 @@ class Relation
     fds.each do |fd| 
       lhs, rhs = fd.split('->').map(&:strip)
       keys.each do |key|
+        next if lhs.chars == key.chars
         if (lhs.chars - key.chars).empty? && !key.include?(rhs)
           return true
         end
@@ -177,6 +179,7 @@ class Relation
   end
 
   def compute_normal_form
+    return 'BCNF' if fds.empty?
     if all_rhs_key_attributes?
       "3NF"
     elsif !bcnf_voilating_fds?
