@@ -122,71 +122,45 @@ class Relation
     rhs_attributes - lhs_attributes.map(&:chars).flatten.uniq
   end
 
-  def partial_key_fds
-    keys.map do |key|
-      key_attrs = key.chars
-      lhs_attributes.select{|attr| !(key_attrs - attr.chars).empty? }
-    end
-  end
-
   def keys_seed
     @keys_seed ||= attributes - attr_in_rhs_only
   end
 
-  def bcnf_voilating_fds?
-    lhs_attributes.each do |attr| 
-      keys.each do |key|
+  def bcnf?
+    return true if fds.empty?
+    lhs_attributes.all? do |attr|
+      keys.any? do |key|
         key_attrs = key.chars
-        if !(key_attrs - attr.chars).empty?
-          return true
-        end
+        (key_attrs - attr.chars).empty?
       end
     end
-    return false
   end
 
   def one_nf?
-    fds.each do |fd| 
+    fds.any? do |fd| 
       lhs, rhs = fd.split('->').map(&:strip)
-      keys.each do |key|
-        next if lhs.chars == key.chars
-        if (lhs.chars - key.chars).empty? && !key.include?(rhs)
-          return true
-        end
+      keys.any? do |key|
+        key_attrs = key.chars
+        key_attribute = key.include?(rhs)
+        partial_key = lhs.chars != key_attrs && (lhs.chars - key_attrs).empty?
+        partial_key && !key_attribute
       end
     end
-    return false
   end
 
   def all_rhs_key_attributes?
-    rhs_attributes.each do |attr|
-      key_attribute = keys.any? do |key|
+    rhs_attributes.all? do |attr|
+      keys.any? do |key|
         key.include?(attr)
       end
-      return false unless key_attribute
     end
-    return true
-  end
-
-  def any_rhs_key_attributes?
-    rhs_attributes.each do |attr|
-      key_attribute = keys.any? do |key|
-        key.include?(attr)
-      end
-      return true if key_attribute
-    end
-    return false
   end
 
   def compute_normal_form
-    return 'BCNF' if fds.empty?
-    if all_rhs_key_attributes?
-      "3NF"
-    elsif !bcnf_voilating_fds?
-      if any_rhs_key_attributes?
-        return "3NF"
-      end
+    if bcnf?
       "BCNF" 
+    elsif all_rhs_key_attributes?
+      "3NF"
     elsif one_nf?
       "1NF"
     else

@@ -37,10 +37,11 @@ end
 # Eg: Relation Attributes: ABCDEF
 # FDS: A->C; AB->B;  A->F; AB->CD; C->B
 rdb = Relation.new(relation_attributes, fds)
+puts
+puts "Valid FDS: #{rdb.fds.join('; ')}"
 compute_closure(rdb)
 keys = rdb.keys.join(', ')
 normal_form = rdb.normal_form
 puts
-puts "Valid FDS: #{rdb.fds.join('; ')}"
 puts "Keys of the table: #{keys}"
 puts "Table's Normal Form: #{normal_form} "
