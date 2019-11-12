@@ -10,7 +10,6 @@ class Relation
 
   def closure(seed, computing_fds=fds)
     seed_closure = seed.strip.chars - ['-', '>', ' ']
-    # return unless (seed_closure - attributes).empty?
     valid_fds = computing_fds
     found_fds = []
     found_all_closure = false
@@ -48,12 +47,18 @@ class Relation
         update_lhs_rhs_attr(lhs, rhs)
       end
     end
-    filtered_fds - superfluous_fds(filtered_fds)
+    filtered_fds = filtered_fds - superfluous_fds(filtered_fds)
+    update_lhs_attr(filtered_fds)
+    filtered_fds
   end
 
   def update_lhs_rhs_attr(lhs, rhs)
     @lhs_attributes << lhs
     @rhs_attributes << rhs
+  end
+
+  def update_lhs_attr(filtered_fds)
+    @lhs_attributes = filtered_fds.map { |fd| lhs, _ = fd.split('->'); lhs}
   end
 
   def discard_fd?(lhs, rhs)
@@ -67,12 +72,16 @@ class Relation
   def superfluous_fds(filtered_fds)
     discarded_fds = []
     filtered_fds.each do |fd|
+      next if discarded_fds.include?(fd)
       lhs, rhs = fd.split('->').map(&:strip)
-      if lhs.size > 1
-        remainging_fds = filtered_fds - [fd] - discarded_fds
-        fd_closure = closure(lhs, remainging_fds)
-        if ([rhs] - fd_closure).empty?
+      remainging_fds = filtered_fds - [fd] - discarded_fds
+      fd_closure = closure(lhs, remainging_fds)
+      if ([rhs] - fd_closure).empty?
+        if lhs.size > 1
           discarded_fds << fd
+        else
+          weaker_fds = lhs_attributes.select{ |attr| attr.include?(lhs) && attr != lhs }
+          discarded_fds << fd if  weaker_fds.empty?
         end
       end
     end

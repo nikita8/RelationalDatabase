@@ -14,9 +14,3 @@ User will be prompted to enter the relation attributes(upper case single charact
 To compute the closure, user is asked to enter any set of attributes as the seed. Users can compute as many closure as they want until they type 'quit'. 
 
 The program outputs the Keys and the Normal Form designation for the table computed based on the FD's.
-
-
-
-
-
-
