@@ -139,10 +139,10 @@ class Relation
   def one_nf?
     fds.any? do |fd| 
       lhs, rhs = fd.split('->').map(&:strip)
+      key_attribute = keys.any? { |key| key.include?(rhs) }
       keys.any? do |key|
         key_attrs = key.chars
-        key_attribute = key.include?(rhs)
-        partial_key = lhs.chars != key_attrs && (lhs.chars - key_attrs).empty?
+        partial_key = lhs.chars != key_attrs && !(lhs.chars & key_attrs).empty?
         partial_key && !key_attribute
       end
     end
@@ -150,9 +150,7 @@ class Relation
 
   def all_rhs_key_attributes?
     rhs_attributes.all? do |attr|
-      keys.any? do |key|
-        key.include?(attr)
-      end
+      keys.any? { |key| key.include?(attr) }
     end
   end
 
